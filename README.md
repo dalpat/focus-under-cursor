@@ -2,6 +2,10 @@
 
 A GNOME Shell extension that focuses the window under the cursor when exiting the overview — like macOS Mission Control.
 
+## Screenshot
+
+![Thumbnail](screenshots/thumbnail.png)
+
 ## Behavior
 
 By default, GNOME always returns focus to the previously focused window when exiting the overview, regardless of where your cursor is. This extension changes that:
@@ -15,7 +19,7 @@ Touchpad gestures are handled safely so hover tracking doesn't fight with gestur
 
 ### From extensions.gnome.org
 
-Coming soon.
+Install from https://extensions.gnome.org/extension/9578/focus-under-cursor-on-overview-exit/
 
 ### Manual
 
@@ -43,6 +47,7 @@ On Wayland, you need to log out and log back in for GNOME Shell to discover the 
 | 47 | ✅ |
 | 48 | ✅ |
 | 49 | ✅ |
+| 50 | ✅ |
 
 ## License
 
