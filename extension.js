@@ -6,6 +6,7 @@
 import {Extension, InjectionManager} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {WindowPreview} from 'resource:///org/gnome/shell/ui/windowPreview.js';
 import {ControlsManager} from 'resource:///org/gnome/shell/ui/overviewControls.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import Meta from 'gi://Meta';
 
 export default class FocusUnderCursorExtension extends Extension {
@@ -13,22 +14,37 @@ export default class FocusUnderCursorExtension extends Extension {
     #hoveredWindow;
     #hoveredWindowId;
     #isGesturing;
+    #windowToFocus;
 
     enable() {
         this.#injectionManager = new InjectionManager();
         this.#hoveredWindow = null;
         this.#hoveredWindowId = null;
         this.#isGesturing = false;
+        this.#windowToFocus = null;
 
         this.#patchOverview();
+
+        Main.overview.connectObject(
+            'hiding', () => this.#captureWindowForFocus(),
+            'hidden', () => {
+                if (this.#windowToFocus) {
+                    this.#activateWindow(this.#windowToFocus);
+                    this.#windowToFocus = null;
+                }
+            },
+            this
+        );
     }
 
     disable() {
+        Main.overview.disconnectObject(this);
         this.#injectionManager?.clear();
         this.#injectionManager = null;
         this.#hoveredWindow = null;
         this.#hoveredWindowId = null;
         this.#isGesturing = false;
+        this.#windowToFocus = null;
     }
 
     #patchOverview() {
@@ -63,17 +79,6 @@ export default class FocusUnderCursorExtension extends Extension {
                 }
         );
 
-        // Activate hovered/fallback window before overview exits
-        this.#injectionManager.overrideMethod(
-            ControlsManager.prototype,
-            'prepareToLeaveOverview',
-            original =>
-                function () {
-                    self.#focusWindowUnderCursor();
-                    return original.apply(this, arguments);
-                }
-        );
-
         // Track gesture state so hover tracking doesn't fight with gestures
         this.#injectionManager.overrideMethod(
             ControlsManager.prototype,
@@ -96,10 +101,10 @@ export default class FocusUnderCursorExtension extends Extension {
         );
     }
 
-    #focusWindowUnderCursor() {
+    #captureWindowForFocus() {
         // 1. Use hover-tracked window from overview previews
         if (this.#hoveredWindow) {
-            this.#activateWindow(this.#hoveredWindow);
+            this.#windowToFocus = this.#hoveredWindow;
             this.#hoveredWindow = null;
             this.#hoveredWindowId = null;
             return;
@@ -107,11 +112,7 @@ export default class FocusUnderCursorExtension extends Extension {
 
         // 2. Fall back: find the real window at the cursor's screen position
         const [x, y] = global.get_pointer();
-        const window = this.#findWindowAtPosition(x, y);
-        if (window) {
-            this.#activateWindow(window);
-        }
-
+        this.#windowToFocus = this.#findWindowAtPosition(x, y);
         this.#hoveredWindow = null;
         this.#hoveredWindowId = null;
     }
