@@ -4,5 +4,5 @@
   "description": "When exiting the GNOME overview, focus the window under the cursor instead of the previously focused window, like macOS Mission Control.",
   "shell-version": ["45", "46", "47", "48", "49", "50"],
   "url": "https://github.com/dalpat/focus-under-cursor",
-  "version": 1.1
+  "version": 1.2
 }
