@@ -39,15 +39,6 @@ cd focus-under-cursor
 ./install.sh
 ```
 
-### Option 3: Super Manual
-
-```bash
-mkdir -p ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension
-cp extension.js metadata.json prefs.js settings.js \
-  ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension/
-gnome-extensions enable focus-under-cursor@extension
-```
-
 **Note:** On Wayland, log out and back in. On X11, press `Alt+F2`, type `r`, press Enter.
 
 ## Settings
@@ -60,8 +51,15 @@ gnome-extensions prefs focus-under-cursor@extension
 ### Available Options
 
 **Focus window under cursor when no preview was hovered**
-- **ON** (default): Moving your cursor over empty space in Overview will focus the window at that position when you exit
-- **OFF**: Focus only changes when you hover a window thumbnail
+
+Controls whether hovering a window preview focuses it when you haven't moved your pointer.
+
+- **ON**: Hovering any window preview focuses it immediately, even if you haven't moved your mouse since opening Overview
+- **OFF** (default): Focus only changes if you actually move your pointer onto a preview
+
+**Example:** If you open Overview with Super key and your mouse happens to be over a window preview, but you don't move the mouse:
+- Setting **ON**: That window gets focused when you close Overview
+- Setting **OFF**: Focus stays on whatever window was active before
 
 ## Compatibility
 
