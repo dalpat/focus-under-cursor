@@ -131,8 +131,8 @@ if [[ -f "${SCRIPT_DIR}/prefs.js" ]]; then
     $CP_CMD "${SCRIPT_DIR}/prefs.js" "$TARGET_DIR/"
 fi
 
-if [[ -f "${SCRIPT_DIR}/settings.js" ]]; then
-    $CP_CMD "${SCRIPT_DIR}/settings.js" "$TARGET_DIR/"
+if [[ -f "${SCRIPT_DIR}/config.js" ]]; then
+    $CP_CMD "${SCRIPT_DIR}/config.js" "$TARGET_DIR/"
 fi
 
 if [[ -d "${SCRIPT_DIR}/icons" ]]; then
