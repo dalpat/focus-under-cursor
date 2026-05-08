@@ -1,0 +1,20 @@
+# Extension packages
+*.zip
+
+# GNOME Shell
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Temporary files
+*.log
+*.tmp
