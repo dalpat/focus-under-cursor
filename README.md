@@ -27,7 +27,14 @@ Install from https://extensions.gnome.org/extension/9578/focus-under-cursor-on-o
 git clone https://github.com/dalpat/focus-under-cursor.git
 cd focus-under-cursor
 mkdir -p ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension
-cp extension.js metadata.json ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension/
+
+# Copy all extension files
+cp extension.js metadata.json prefs.js ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension/
+
+# Copy and compile GSettings schemas
+mkdir -p ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension/schemas
+cp schemas/* ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension/schemas/
+glib-compile-schemas ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension/schemas/
 ```
 
 Then enable:

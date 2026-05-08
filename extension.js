@@ -8,6 +8,7 @@ import {WindowPreview} from 'resource:///org/gnome/shell/ui/windowPreview.js';
 import {ControlsManager} from 'resource:///org/gnome/shell/ui/overviewControls.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import Meta from 'gi://Meta';
+import * as FileSettings from './settings.js';
 
 export default class FocusUnderCursorExtension extends Extension {
     #injectionManager;
@@ -15,6 +16,8 @@ export default class FocusUnderCursorExtension extends Extension {
     #hoveredWindowId;
     #isGesturing;
     #windowToFocus;
+    #lastPointerX;
+    #lastPointerY;
 
     enable() {
         this.#injectionManager = new InjectionManager();
@@ -26,8 +29,11 @@ export default class FocusUnderCursorExtension extends Extension {
         this.#patchOverview();
 
         Main.overview.connectObject(
-            'hiding', () => this.#captureWindowForFocus(),
-            'hidden', () => {
+            'showing', () => {
+                [this.#lastPointerX, this.#lastPointerY] = global.get_pointer();
+            },
+            'hiding', () => {
+                this.#captureWindowForFocus();
                 if (this.#windowToFocus) {
                     this.#activateWindow(this.#windowToFocus);
                     this.#windowToFocus = null;
@@ -45,6 +51,8 @@ export default class FocusUnderCursorExtension extends Extension {
         this.#hoveredWindowId = null;
         this.#isGesturing = false;
         this.#windowToFocus = null;
+        this.#lastPointerX = null;
+        this.#lastPointerY = null;
     }
 
     #patchOverview() {
@@ -102,6 +110,20 @@ export default class FocusUnderCursorExtension extends Extension {
     }
 
     #captureWindowForFocus() {
+        const [currentX, currentY] = global.get_pointer();
+        const pointerMoved = (currentX !== this.#lastPointerX || currentY !== this.#lastPointerY);
+        
+        // Read setting fresh each time (no caching)
+        const focusWithoutMovement = FileSettings.getSetting('use-position-fallback');
+
+        // If pointer hasn't moved and setting is OFF, don't change focus (issue #2)
+        if (!pointerMoved && !focusWithoutMovement) {
+            this.#windowToFocus = null;
+            this.#hoveredWindow = null;
+            this.#hoveredWindowId = null;
+            return;
+        }
+
         // 1. Use hover-tracked window from overview previews
         if (this.#hoveredWindow) {
             this.#windowToFocus = this.#hoveredWindow;
@@ -111,8 +133,11 @@ export default class FocusUnderCursorExtension extends Extension {
         }
 
         // 2. Fall back: find the real window at the cursor's screen position
-        const [x, y] = global.get_pointer();
-        this.#windowToFocus = this.#findWindowAtPosition(x, y);
+        if (focusWithoutMovement) {
+            this.#windowToFocus = this.#findWindowAtPosition(currentX, currentY);
+        } else {
+            this.#windowToFocus = null;
+        }
         this.#hoveredWindow = null;
         this.#hoveredWindowId = null;
     }
