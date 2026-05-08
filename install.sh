@@ -139,21 +139,6 @@ if [[ -d "${SCRIPT_DIR}/icons" ]]; then
     $CP_CMD -r "${SCRIPT_DIR}/icons" "$TARGET_DIR/"
 fi
 
-if [[ -d "${SCRIPT_DIR}/schemas" ]]; then
-    $MKDIR_CMD "${TARGET_DIR}/schemas"
-    $CP_CMD "${SCRIPT_DIR}/schemas/"* "${TARGET_DIR}/schemas/"
-
-    # Compile schemas if source XML exists and compiler is available
-    if [[ -f "${TARGET_DIR}/schemas/org.gnome.shell.extensions.focus-under-cursor.gschema.xml" ]]; then
-        if command -v glib-compile-schemas &>/dev/null; then
-            echo "Compiling gsettings schemas..."
-            glib-compile-schemas "${TARGET_DIR}/schemas/"
-        else
-            echo "Warning: glib-compile-schemas not found. Using pre-compiled schemas if available." >&2
-        fi
-    fi
-fi
-
 if [[ -f "${SCRIPT_DIR}/stylesheet.css" ]]; then
     $CP_CMD "${SCRIPT_DIR}/stylesheet.css" "$TARGET_DIR/"
 fi
