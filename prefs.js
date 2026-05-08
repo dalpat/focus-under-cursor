@@ -4,13 +4,12 @@
  */
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import Gio from 'gi://Gio';
 import Adw from 'gi://Adw';
-import * as FileSettings from './settings.js';
 
 export default class FocusUnderCursorPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        // Read current setting
-        const fallbackEnabled = FileSettings.getSetting('use-position-fallback');
+        const settings = this.getSettings();
 
         const page = new Adw.PreferencesPage({
             title: 'General',
@@ -22,19 +21,16 @@ export default class FocusUnderCursorPreferences extends ExtensionPreferences {
         });
 
         const row = new Adw.SwitchRow({
-            title: 'Focus window under cursor when no preview was hovered',
-            subtitle: 'When disabled, focus remains on the previously focused window unless a window preview was hovered in the overview',
-            active: fallbackEnabled
+            title: 'Focus window preview without pointer movement',
+            subtitle: 'When enabled, hovering a window in overview focuses it even if you have not moved your mouse. When disabled (default), focus only changes when you actually move the pointer onto a preview.'
         });
 
-        // Connect to changes and save immediately
-        row.connect('notify::active', () => {
-            const newValue = row.get_active();
-            const success = FileSettings.setSetting('use-position-fallback', newValue);
-            if (success) {
-                console.log(`[FocusUnderCursor] Setting updated: use-position-fallback = ${newValue}`);
-            }
-        });
+        settings.bind(
+            'focus-on-hover-without-movement',
+            row,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
 
         group.add(row);
         page.add(group);

@@ -131,12 +131,13 @@ if [[ -f "${SCRIPT_DIR}/prefs.js" ]]; then
     $CP_CMD "${SCRIPT_DIR}/prefs.js" "$TARGET_DIR/"
 fi
 
-if [[ -f "${SCRIPT_DIR}/settings.js" ]]; then
-    $CP_CMD "${SCRIPT_DIR}/settings.js" "$TARGET_DIR/"
-fi
-
 if [[ -d "${SCRIPT_DIR}/icons" ]]; then
     $CP_CMD -r "${SCRIPT_DIR}/icons" "$TARGET_DIR/"
+fi
+
+if [[ -d "${SCRIPT_DIR}/schemas" ]]; then
+    $MKDIR_CMD "${TARGET_DIR}/schemas"
+    $CP_CMD "${SCRIPT_DIR}/schemas/"* "${TARGET_DIR}/schemas/"
 fi
 
 if [[ -f "${SCRIPT_DIR}/stylesheet.css" ]]; then

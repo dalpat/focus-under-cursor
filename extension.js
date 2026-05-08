@@ -8,7 +8,6 @@ import {WindowPreview} from 'resource:///org/gnome/shell/ui/windowPreview.js';
 import {ControlsManager} from 'resource:///org/gnome/shell/ui/overviewControls.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import Meta from 'gi://Meta';
-import * as FileSettings from './settings.js';
 
 export default class FocusUnderCursorExtension extends Extension {
     #injectionManager;
@@ -16,6 +15,7 @@ export default class FocusUnderCursorExtension extends Extension {
     #hoveredWindowId;
     #isGesturing;
     #windowToFocus;
+    #settings;
     #lastPointerX;
     #lastPointerY;
 
@@ -25,6 +25,7 @@ export default class FocusUnderCursorExtension extends Extension {
         this.#hoveredWindowId = null;
         this.#isGesturing = false;
         this.#windowToFocus = null;
+        this.#settings = this.getSettings();
 
         this.#patchOverview();
 
@@ -51,6 +52,7 @@ export default class FocusUnderCursorExtension extends Extension {
         this.#hoveredWindowId = null;
         this.#isGesturing = false;
         this.#windowToFocus = null;
+        this.#settings = null;
         this.#lastPointerX = null;
         this.#lastPointerY = null;
     }
@@ -113,11 +115,11 @@ export default class FocusUnderCursorExtension extends Extension {
         const [currentX, currentY] = global.get_pointer();
         const pointerMoved = (currentX !== this.#lastPointerX || currentY !== this.#lastPointerY);
         
-        // Read setting fresh each time (no caching)
-        const focusWithoutMovement = FileSettings.getSetting('use-position-fallback');
+        // Read setting: focus window on hover even without pointer movement
+        const focusOnHoverWithoutMovement = this.#settings.get_boolean('focus-on-hover-without-movement');
 
-        // If pointer hasn't moved and setting is OFF, don't change focus (issue #2)
-        if (!pointerMoved && !focusWithoutMovement) {
+        // If pointer hasn't moved and setting is OFF (default), don't change focus (issue #2)
+        if (!pointerMoved && !focusOnHoverWithoutMovement) {
             this.#windowToFocus = null;
             this.#hoveredWindow = null;
             this.#hoveredWindowId = null;
@@ -133,7 +135,7 @@ export default class FocusUnderCursorExtension extends Extension {
         }
 
         // 2. Fall back: find the real window at the cursor's screen position
-        if (focusWithoutMovement) {
+        if (focusOnHoverWithoutMovement) {
             this.#windowToFocus = this.#findWindowAtPosition(currentX, currentY);
         } else {
             this.#windowToFocus = null;
