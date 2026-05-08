@@ -1,27 +1,37 @@
 # Focus Under Cursor on Overview Exit
 
-A GNOME Shell extension that focuses the window under the cursor when exiting the overview — like macOS Mission Control.
-
-## Screenshot
+Focus the window under your cursor when exiting GNOME Overview — just like macOS Mission Control.
 
 ![Thumbnail](screenshots/thumbnail.png)
 
-## Behavior
+## What It Does
 
-By default, GNOME always returns focus to the previously focused window when exiting the overview, regardless of where your cursor is. This extension changes that:
+**The Problem:** GNOME always returns focus to the previously focused window when you exit Overview, even if your cursor is somewhere else.
 
-1. **Hover tracking** — If your cursor is over a window thumbnail in the overview, that window gets focus on exit.
-2. **Position fallback** — If your cursor isn't over any thumbnail (e.g., empty space), the extension finds the real window at your cursor's screen position and focuses it.
+**The Solution:** This extension focuses whatever window your cursor is pointing at when you close Overview.
 
-Touchpad gestures are handled safely so hover tracking doesn't fight with gesture-based navigation.
+## How It Works
+
+| Your Action | Result |
+|-------------|--------|
+| Hover a window thumbnail → Close Overview | That window gets focus ✅ |
+| Move cursor over empty space → Close Overview | Window under cursor gets focus ✅ |
+| Don't move cursor → Close Overview | Focus stays unchanged ✅ |
 
 ## Installation
 
-### From extensions.gnome.org
+### Option 1: extensions.gnome.org (Recommended)
 
-Install from https://extensions.gnome.org/extension/9578/focus-under-cursor-on-overview-exit/
+Install from the official GNOME Extensions site:
+https://extensions.gnome.org/extension/9578/focus-under-cursor-on-overview-exit/
 
-### Manual
+### Option 2: One-Line Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dalpat/focus-under-cursor/main/install.sh | bash
+```
+
+### Option 3: Manual Install
 
 ```bash
 git clone https://github.com/dalpat/focus-under-cursor.git
@@ -29,31 +39,33 @@ cd focus-under-cursor
 ./install.sh
 ```
 
-Or manually:
+### Option 3: Super Manual
 
 ```bash
 mkdir -p ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension
-cp extension.js metadata.json prefs.js settings.js ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension/
-```
-
-Then enable:
-
-```bash
+cp extension.js metadata.json prefs.js settings.js \
+  ~/.local/share/gnome-shell/extensions/focus-under-cursor@extension/
 gnome-extensions enable focus-under-cursor@extension
 ```
 
-On Wayland, you need to log out and log back in for GNOME Shell to discover the extension.
+**Note:** On Wayland, log out and back in. On X11, press `Alt+F2`, type `r`, press Enter.
+
+## Settings
+
+Open settings with:
+```bash
+gnome-extensions prefs focus-under-cursor@extension
+```
+
+### Available Options
+
+**Focus window under cursor when no preview was hovered**
+- **ON** (default): Moving your cursor over empty space in Overview will focus the window at that position when you exit
+- **OFF**: Focus only changes when you hover a window thumbnail
 
 ## Compatibility
 
-| GNOME Shell | Status |
-|---|---|
-| 45 | ✅ |
-| 46 | ✅ |
-| 47 | ✅ |
-| 48 | ✅ |
-| 49 | ✅ |
-| 50 | ✅ |
+Works with GNOME Shell 45, 46, 47, 48, 49, and 50.
 
 ## License
 
