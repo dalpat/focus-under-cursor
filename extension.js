@@ -65,13 +65,16 @@ export default class FocusUnderCursorExtension extends Extension {
                             currentX !== self.#lastPointerX ||
                             currentY !== self.#lastPointerY;
 
-                        if (self.#isGesturing || pointerMoved)
-                            self.#activateWindow(this.metaWindow);
-                    }
-
-                    if (!self.#isGesturing && this.metaWindow) {
-                        self.#hoveredWindow = this.metaWindow;
-                        self.#hoveredWindowId = this.metaWindow.get_id();
+                        // Raise the target's z-order only (no focus) so it LEADS
+                        // the overview exit flight instead of popping above the
+                        // other windows mid-animation. Keyboard focus is
+                        // committed once on exit (see #captureWindowForFocus),
+                        // which keeps the change invisible and avoids the "flip".
+                        if (self.#isGesturing || pointerMoved) {
+                            self.#raiseWindow(this.metaWindow);
+                            self.#hoveredWindow = this.metaWindow;
+                            self.#hoveredWindowId = this.metaWindow.get_id();
+                        }
                     }
                     return original.apply(this, arguments);
                 }
@@ -85,8 +88,7 @@ export default class FocusUnderCursorExtension extends Extension {
                 function () {
                     if (!self.#isGesturing &&
                         this.metaWindow?.get_id() === self.#hoveredWindowId) {
-                        self.#hoveredWindow = null;
-                        self.#hoveredWindowId = null;
+                        self.#clearHover();
                     }
                     return original.apply(this, arguments);
                 }
@@ -134,36 +136,27 @@ export default class FocusUnderCursorExtension extends Extension {
     }
 
     #captureWindowForFocus() {
-        const [currentX, currentY] = global.get_pointer();
-        const pointerMoved = (currentX !== this.#lastPointerX || currentY !== this.#lastPointerY);
-
-        // Read setting: focus window under cursor when no preview was hovered
-        const focusWithoutMovement = this.#settings.get_boolean('use-position-fallback');
-
-        // If pointer hasn't moved and setting is OFF, don't change focus (issue #2)
-        if (!pointerMoved && !focusWithoutMovement) {
-            this.#windowToFocus = null;
-            this.#hoveredWindow = null;
-            this.#hoveredWindowId = null;
-            return;
-        }
-
-        // 1. Use hover-tracked window from overview previews
+        // 1. A hover-/gesture-tracked preview is an explicit choice (it is only
+        //    set after real pointer movement or a gesture), so honour it
+        //    regardless of the position-fallback setting.
         if (this.#hoveredWindow) {
             this.#windowToFocus = this.#hoveredWindow;
-            this.#hoveredWindow = null;
-            this.#hoveredWindowId = null;
+            this.#clearHover();
             return;
         }
 
-        // 2. Fall back: find the real window at the cursor's screen position
+        // 2. No preview was hovered. Optionally fall back to the real window at
+        //    the cursor's screen position. When the setting is OFF, leave focus
+        //    on the previously focused window (issue #2: don't steal focus on a
+        //    stationary peek).
+        const focusWithoutMovement = this.#settings.get_boolean('use-position-fallback');
         if (focusWithoutMovement) {
+            const [currentX, currentY] = global.get_pointer();
             this.#windowToFocus = this.#findWindowAtPosition(currentX, currentY);
         } else {
             this.#windowToFocus = null;
         }
-        this.#hoveredWindow = null;
-        this.#hoveredWindowId = null;
+        this.#clearHover();
     }
 
     #findWindowAtPosition(x, y) {
@@ -194,11 +187,27 @@ export default class FocusUnderCursorExtension extends Extension {
         return null;
     }
 
+    // Raise z-order only — no input focus. Cheap enough to call repeatedly as
+    // the cursor crosses previews during a gesture, so the exit animation flies
+    // with the correct stacking from the first frame.
+    #raiseWindow(window) {
+        try {
+            window.raise();
+        } catch (e) {
+            console.error(`Focus Under Cursor: failed to raise window: ${e.message}`);
+        }
+    }
+
     #activateWindow(window) {
         try {
             window.activate(global.get_current_time());
         } catch (e) {
             console.error(`Focus Under Cursor: failed to activate window: ${e.message}`);
         }
+    }
+
+    #clearHover() {
+        this.#hoveredWindow = null;
+        this.#hoveredWindowId = null;
     }
 }
