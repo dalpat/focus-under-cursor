@@ -8,7 +8,6 @@ import {WindowPreview} from 'resource:///org/gnome/shell/ui/windowPreview.js';
 import {ControlsManager} from 'resource:///org/gnome/shell/ui/overviewControls.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import Meta from 'gi://Meta';
-import * as Config from './config.js';
 
 export default class FocusUnderCursorExtension extends Extension {
     #injectionManager;
@@ -16,6 +15,7 @@ export default class FocusUnderCursorExtension extends Extension {
     #hoveredWindowId;
     #isGesturing;
     #windowToFocus;
+    #settings;
     #lastPointerX;
     #lastPointerY;
 
@@ -25,19 +25,13 @@ export default class FocusUnderCursorExtension extends Extension {
         this.#hoveredWindowId = null;
         this.#isGesturing = false;
         this.#windowToFocus = null;
+        this.#settings = this.getSettings();
 
         this.#patchOverview();
 
         Main.overview.connectObject(
             'showing', () => {
                 [this.#lastPointerX, this.#lastPointerY] = global.get_pointer();
-            },
-            'hiding', () => {
-                this.#captureWindowForFocus();
-                if (this.#windowToFocus) {
-                    this.#activateWindow(this.#windowToFocus);
-                    this.#windowToFocus = null;
-                }
             },
             this
         );
@@ -51,6 +45,7 @@ export default class FocusUnderCursorExtension extends Extension {
         this.#hoveredWindowId = null;
         this.#isGesturing = false;
         this.#windowToFocus = null;
+        this.#settings = null;
         this.#lastPointerX = null;
         this.#lastPointerY = null;
     }
@@ -64,6 +59,16 @@ export default class FocusUnderCursorExtension extends Extension {
             'vfunc_enter_event',
             original =>
                 function () {
+                    if (this.metaWindow) {
+                        const [currentX, currentY] = global.get_pointer();
+                        const pointerMoved =
+                            currentX !== self.#lastPointerX ||
+                            currentY !== self.#lastPointerY;
+
+                        if (self.#isGesturing || pointerMoved)
+                            self.#activateWindow(this.metaWindow);
+                    }
+
                     if (!self.#isGesturing && this.metaWindow) {
                         self.#hoveredWindow = this.metaWindow;
                         self.#hoveredWindowId = this.metaWindow.get_id();
@@ -107,14 +112,33 @@ export default class FocusUnderCursorExtension extends Extension {
                     return original.apply(this, arguments);
                 }
         );
+
+        // Activate the window under cursor AFTER prepareToLeaveOverview.
+        // This ensures the correct window keeps focus during the exit
+        // animation, fixing the "flip" where GNOME Shell briefly focuses
+        // the previously focused window after we activate on 'hiding'.
+        this.#injectionManager.overrideMethod(
+            ControlsManager.prototype,
+            'prepareToLeaveOverview',
+            original =>
+                function () {
+                    const result = original.apply(this, arguments);
+                    self.#captureWindowForFocus();
+                    if (self.#windowToFocus) {
+                        self.#activateWindow(self.#windowToFocus);
+                        self.#windowToFocus = null;
+                    }
+                    return result;
+                }
+        );
     }
 
     #captureWindowForFocus() {
         const [currentX, currentY] = global.get_pointer();
         const pointerMoved = (currentX !== this.#lastPointerX || currentY !== this.#lastPointerY);
-        
-        // Read config fresh each time (no caching)
-        const focusWithoutMovement = Config.getConfigValue('use-position-fallback');
+
+        // Read setting: focus window under cursor when no preview was hovered
+        const focusWithoutMovement = this.#settings.get_boolean('use-position-fallback');
 
         // If pointer hasn't moved and setting is OFF, don't change focus (issue #2)
         if (!pointerMoved && !focusWithoutMovement) {

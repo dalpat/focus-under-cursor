@@ -1,6 +1,9 @@
 # Extension packages
 *.zip
 
+# Compiled GSettings schema (regenerated on install; EGO-P-006)
+schemas/gschemas.compiled
+
 # GNOME Shell
 *.swp
 *.swo
@@ -18,3 +21,6 @@ Thumbs.db
 # Temporary files
 *.log
 *.tmp
+
+# Dev scripts
+build-and-test.sh

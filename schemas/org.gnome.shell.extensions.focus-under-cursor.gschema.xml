@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.focus-under-cursor" path="/org/gnome/shell/extensions/focus-under-cursor/">
+    <key name="use-position-fallback" type="b">
+      <default>true</default>
+      <summary>Focus window under cursor when no preview was hovered</summary>
+      <description>When enabled, if no window preview was hovered in the overview, the extension will find and focus the window at the pointer position. When disabled, focus remains on the previously focused window unless a preview was explicitly hovered.</description>
+    </key>
+  </schema>
+</schemalist>

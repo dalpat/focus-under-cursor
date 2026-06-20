@@ -131,12 +131,18 @@ if [[ -f "${SCRIPT_DIR}/prefs.js" ]]; then
     $CP_CMD "${SCRIPT_DIR}/prefs.js" "$TARGET_DIR/"
 fi
 
-if [[ -f "${SCRIPT_DIR}/config.js" ]]; then
-    $CP_CMD "${SCRIPT_DIR}/config.js" "$TARGET_DIR/"
-fi
-
 if [[ -d "${SCRIPT_DIR}/icons" ]]; then
     $CP_CMD -r "${SCRIPT_DIR}/icons" "$TARGET_DIR/"
+fi
+
+if [[ -d "${SCRIPT_DIR}/schemas" ]]; then
+    $MKDIR_CMD "${TARGET_DIR}/schemas"
+    $CP_CMD "${SCRIPT_DIR}/schemas/"*.gschema.xml "${TARGET_DIR}/schemas/"
+    # Compile schema locally — EGO does this automatically on install,
+    # but for local/manual install we need to do it ourselves
+    if command -v glib-compile-schemas &>/dev/null; then
+        glib-compile-schemas "${TARGET_DIR}/schemas/"
+    fi
 fi
 
 if [[ -f "${SCRIPT_DIR}/stylesheet.css" ]]; then
